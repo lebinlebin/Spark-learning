@@ -8,6 +8,7 @@ package org.training.spark.sql
   * 3. 计算所有订单中每年最畅销货品
   */
 
+import org.apache.log4j.{Level, Logger}
 import org.apache.spark.SparkConf
 import org.apache.spark.sql.{DataFrame, SaveMode, SparkSession}
 

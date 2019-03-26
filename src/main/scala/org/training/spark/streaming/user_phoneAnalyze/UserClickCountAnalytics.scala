@@ -1,12 +1,10 @@
-package org.training.spark.streaming
+package org.training.spark.streaming.user_phoneAnalyze
 
-import org.apache.spark.SparkConf
-import org.apache.spark.streaming.Seconds
-import org.apache.spark.streaming.StreamingContext
-import org.apache.spark.streaming.kafka.KafkaUtils
-
-import kafka.serializer.StringDecoder
 import com.alibaba.fastjson.JSON
+import kafka.serializer.StringDecoder
+import org.apache.spark.SparkConf
+import org.apache.spark.streaming.kafka.KafkaUtils
+import org.apache.spark.streaming.{Seconds, StreamingContext}
 import org.training.spark.util.{KafkaRedisProperties, RedisClient}
 
 object UserClickCountAnalytics {

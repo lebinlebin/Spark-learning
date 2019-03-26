@@ -2,6 +2,7 @@ package org.training.spark.sql
 
 import org.apache.spark.SparkConf
 import org.apache.spark.sql.SparkSession
+import org.apache.spark.sql.types._
 
 /**
   * 测试为dataFrame指定schema的各种方式

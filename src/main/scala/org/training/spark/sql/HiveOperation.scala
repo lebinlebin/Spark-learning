@@ -5,7 +5,7 @@ package org.training.spark.sql
   */
 
 import java.io.File
-
+import org.apache.spark.sql.Row
 import org.apache.spark.sql.SparkSession
 
 case class Record(key: Int, value: String)

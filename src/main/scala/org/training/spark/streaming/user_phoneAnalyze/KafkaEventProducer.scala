@@ -1,11 +1,12 @@
-package org.training.spark.streaming
+package org.training.spark.streaming.user_phoneAnalyze
 
 import java.util.Properties
+
 import com.alibaba.fastjson.JSONObject
 import kafka.javaapi.producer.Producer
-import kafka.producer.KeyedMessage
-import kafka.producer.ProducerConfig
+import kafka.producer.{KeyedMessage, ProducerConfig}
 import org.training.spark.util.KafkaRedisProperties
+
 import scala.util.Random
 
 object KafkaEventProducer {

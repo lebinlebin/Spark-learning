@@ -1,6 +1,6 @@
-package org.training.spark.core
+package org.training.spark.core.MovieAnalyzer
 
-import org.apache.spark._
+import org.apache.spark.{SparkConf, SparkContext}
 
 import scala.collection.immutable.HashSet
 

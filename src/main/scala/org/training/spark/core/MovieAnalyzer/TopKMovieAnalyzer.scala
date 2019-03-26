@@ -1,6 +1,6 @@
-package org.training.spark.core
+package org.training.spark.core.MovieAnalyzer
 
-import org.apache.spark._
+import org.apache.spark.{SparkConf, SparkContext}
 
 /**
  * 得分最高的10部电影；

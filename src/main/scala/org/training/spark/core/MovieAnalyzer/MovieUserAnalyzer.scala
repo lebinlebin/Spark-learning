@@ -1,9 +1,8 @@
-package org.training.spark.core
+package org.training.spark.core.MovieAnalyzer
 
-import org.apache.spark._
-import org.apache.spark.sql.{Row, SaveMode, SparkSession}
+import org.apache.spark.SparkConf
+import org.apache.spark.sql.SparkSession
 
-import org.apache.spark.sql.types.{StringType, StructField, StructType}
 /**
  * 看过“Lord of the Rings, The (1978)”用户的年龄和性别分布
  */
