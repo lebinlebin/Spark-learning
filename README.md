@@ -1,6 +1,5 @@
-## sparktraining
-Examples for Spark Training in chinahadoop.cn
-
+## spark-learning
+学习spark基础理论知识
 
 ## 本地运行Spark方法
   - 下载spark安装包
