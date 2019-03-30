@@ -284,8 +284,6 @@ stats0数据
     //process stats for age or experience
     def processStatsAgeOrExperience(stats0: org.apache.spark.rdd.RDD[(Int, Array[Double])], label: String)
     = {
-
-
       //group elements by age
       val stats1 = stats0.groupByKey()
 
