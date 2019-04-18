@@ -25,9 +25,9 @@ object Streaming2Kafka {
     val fromTopic = "x"
     val toTopic = "y"
 
-    val brokers = "master01:9092"
+    val brokers = "hadoop100:9092"
     //获取zookeeper的信息
-    val zookeeper = "master01:2181"
+    val zookeeper = "hadoop100:2181"
 
     val kafkaPro = Map[String,String](
       ConsumerConfig.BOOTSTRAP_SERVERS_CONFIG -> brokers,//用于初始化链接到集群的地址
@@ -62,7 +62,8 @@ object Streaming2Kafka {
       //创建一个获取元信息的请求
       val request = new TopicMetadataRequest(topicList,0)
       //创建了一个客户端 到Kafka的连接
-      val getLeaderConsumer = new SimpleConsumer("master01",9092,100000,10000,"OffsetLookUp")
+      val getLeaderConsumer
+      = new SimpleConsumer("hadoop100",9092,100000,10000,"OffsetLookUp")
 
       val response = getLeaderConsumer.send(request)
 
