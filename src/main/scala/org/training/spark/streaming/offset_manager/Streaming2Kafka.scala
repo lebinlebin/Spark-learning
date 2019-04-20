@@ -39,7 +39,7 @@ object Streaming2Kafka {
       ConsumerConfig.AUTO_OFFSET_RESET_CONFIG -> "largest"
     )
 
-    //获取保存offset的zk路径
+    //获取保存offset的zk路径   driver端
     val topicDirs = new ZKGroupTopicDirs("kafkaxy",fromTopic)
     val zkTopicPath = s"${topicDirs.consumerOffsetDir}"
 
@@ -61,14 +61,15 @@ object Streaming2Kafka {
       val topicList = List(fromTopic)
       //创建一个获取元信息的请求
       val request = new TopicMetadataRequest(topicList,0)
-      //创建了一个客户端 到Kafka的连接
+      //创建了一个客户端 到Kafka的连接 kafka是会有过期时间的。
       val getLeaderConsumer
       = new SimpleConsumer("hadoop100",9092,100000,10000,"OffsetLookUp")
 
       val response = getLeaderConsumer.send(request)
 
-      val topicMeteOption = response.topicsMetadata.headOption
+      val topicMeteOption = response.topicsMetadata.headOption//这个topic的所有的元信息
 
+      //可能从kafka获取不到元信息
       val parttitons = topicMeteOption match{
         case Some(tm) => {
           tm.partitionsMetadata.map(pm => (pm.partitionId,pm.leader.get.host)).toMap[Int,String]
@@ -81,16 +82,18 @@ object Streaming2Kafka {
       println("parttions infomation is:"+parttitons)
       println("children information is:"+children)
 
-      for (i <- 0 until children){
+      for (i <- 0 until children){ //children是分区的个数  对每个分区单独去处理
 
         // 获取保存在ZK中的偏移信息
         val partitionOffset = zkClient.readData[String](s"${topicDirs.consumerOffsetDir}/${i}")
         println(s"Partition【${i}】 目前保存的偏移信息是：${partitionOffset}")
 
         val tp = TopicAndPartition(fromTopic,i)
+
         // 获取当前Parttiton的最小偏移值（主要防止Kafka中的数据过期问题）
         val requesMin = OffsetRequest(Map(tp -> PartitionOffsetRequestInfo(OffsetRequest.EarliestTime,1)))
-        val consumerMin = new SimpleConsumer(parttitons(i),9092,100000,10000,"getMiniOffset")
+        val consumerMin = new SimpleConsumer(parttitons(i),9092,100000,10000,
+          "getMiniOffset")
         val response = consumerMin.getOffsetsBefore(requesMin)
 
         // 获取当前的偏移量
@@ -111,8 +114,8 @@ object Streaming2Kafka {
       val messageHandler = (mmd: MessageAndMetadata[String,String]) => (mmd.topic, mmd.message())
       println("从ZK获取偏移量来创建DStream")
       zkClient.close()
-      stream = KafkaUtils.createDirectStream[String,String,StringDecoder,StringDecoder,(String,String)](ssc,kafkaPro,fromOffsets,messageHandler)
-
+      stream = KafkaUtils
+          .createDirectStream[String,String,StringDecoder,StringDecoder,(String,String)](ssc,kafkaPro,fromOffsets,messageHandler)
     }else{
       println("直接创建，没有从ZK中获取偏移量")
       stream = KafkaUtils.createDirectStream[String, String, StringDecoder, StringDecoder](ssc, kafkaPro, Set(fromTopic))
@@ -149,7 +152,7 @@ object Streaming2Kafka {
         kafkaProxyPool.returnObject(kafkaProxy)
       }
 
-      //更新Offset
+      //更新Offset  在executor端的地址及目录
       val updateTopicDirs = new ZKGroupTopicDirs("kafkaxy",fromTopic)
       val updateZkClient = new ZkClient(zookeeper)
       for(offset <- offsetRanges){
