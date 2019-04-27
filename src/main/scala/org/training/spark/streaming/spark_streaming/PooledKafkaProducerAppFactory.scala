@@ -9,23 +9,21 @@ import org.apache.kafka.clients.producer.{KafkaProducer, ProducerRecord}
   * Created by liulebin on 03/10/2019.
   */
 
-case class KafkaProducerProxy(brokerList: String,
+case class KafkaProducerProxy( brokerList: String,
                             producerConfig: Properties = new Properties,
                             defaultTopic: Option[String] = None,
-                            producer: Option[KafkaProducer[String, String]] = None) {
+                            producer: Option[KafkaProducer[String, String]] = None ) {
 
   type Key = String
   type Val = String
 
-  require(brokerList == null || !brokerList.isEmpty, "Must set broker list")
+  require(brokerList != null && !brokerList.isEmpty, "Must set broker list")
 
   private val p = producer getOrElse {
-
     var props:Properties= new Properties();
     props.put("bootstrap.servers", brokerList);
     props.put("key.serializer", "org.apache.kafka.common.serialization.StringSerializer");
     props.put("value.serializer", "org.apache.kafka.common.serialization.StringSerializer");
-
     new KafkaProducer[String,String](props)
   }
 
@@ -62,7 +60,7 @@ case class KafkaProducerProxy(brokerList: String,
 }
 
 
-abstract class KafkaProducerFactory(brokerList: String, config: Properties, topic: Option[String] = None)
+abstract class KafkaProducerFactory( brokerList: String, config: Properties, topic: Option[String] = None )
     extends Serializable {
   def newInstance(): KafkaProducerProxy
 }

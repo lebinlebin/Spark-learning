@@ -3,7 +3,9 @@ package org.training.spark.streaming.user_phoneAnalyze
 import com.alibaba.fastjson.JSON
 import kafka.serializer.StringDecoder
 import org.apache.spark.SparkConf
-import org.apache.spark.streaming.kafka.KafkaUtils
+import org.apache.spark.streaming.kafka010.ConsumerStrategies.Subscribe
+import org.apache.spark.streaming.kafka010.LocationStrategies.PreferConsistent
+import org.apache.spark.streaming.kafka010._
 import org.apache.spark.streaming.{Seconds, StreamingContext}
 import org.training.spark.util.{KafkaRedisProperties, RedisClient}
 
@@ -29,12 +31,16 @@ object UserClickCountAnalytics {
     val clickHashKey = "app::users::click"
 
     // Create a direct stream
-    val kafkaStream = KafkaUtils
-        .createDirectStream[String, String, StringDecoder, StringDecoder](ssc, kafkaParams, topics)
+    val kafkaStream = KafkaUtils.createDirectStream[String, String](
+      ssc,
+      PreferConsistent,
+      Subscribe[String, String](topics, kafkaParams)
+      )
 
     val events = kafkaStream.flatMap(line => {
       println(s"Line ${line}.")
-      val data = JSON.parseObject(line._2)
+//      val data = JSON.parseObject(line._2)
+      val data = JSON.parseObject(line.value())
       Some(data)
     })
 
@@ -49,7 +55,7 @@ Line (null,{"uid":"a95f22eabc4fd4b580c011a3161a9d9d","os_type":"Android","click_
       rdd.foreachPartition(partitionOfRecords => {
         val jedis = RedisClient.pool.getResource
           jedis.auth("123456")
-          partitionOfRecords.foreach(pair => {
+          partitionOfRecords.foreach( pair => {
           try {
             val uid = pair._1
             val clickCount = pair._2

@@ -1,12 +1,13 @@
 package org.training.spark.streaming.spark_streaming
 
+import com.alibaba.fastjson.JSON
 import org.apache.commons.pool2.impl.{GenericObjectPool, GenericObjectPoolConfig}
 import org.apache.kafka.clients.consumer.{ConsumerConfig, ConsumerRecord}
 import org.apache.kafka.common.serialization.StringDeserializer
 import org.apache.spark.SparkConf
 import org.apache.spark.api.java.function.VoidFunction
 import org.apache.spark.rdd.RDD
-import org.apache.spark.streaming.kafka010.{ConsumerStrategies, HasOffsetRanges, KafkaUtils, LocationStrategies}
+import org.apache.spark.streaming.kafka010._
 import org.apache.spark.streaming.{Seconds, StreamingContext}
 /**
   * Created by liulebin on 03/10/2019.
@@ -40,9 +41,10 @@ bin/zkServer.sh status
 [atguigu@hadoop103 kafka]$ bin/kafka-server-start.sh config/server.properties &
 [atguigu@hadoop104 kafka]$ bin/kafka-server-start.sh config/server.properties &
 
-kafka-console-producer.sh --broker-list hadoop100:9092,hadoop101:9092,hadoop102:9092 --topic source
-kafka-console-consumer.sh --broker-list hadoop100:9092,hadoop101:9092,hadoop102:9092 --topic target
-bin/kafka-console-consumer.sh --zookeeper hadoop100:2181 --from-beginning --topic source
+kafka-console-producer.sh --broker-list hadoop100:9092,hadoop101:9092,hadoop102:9092 --topic from
+kafka-console-consumer.sh --broker-list hadoop100:9092,hadoop101:9092,hadoop102:9092 --topic to
+bin/kafka-console-consumer.sh --zookeeper hadoop100:2181 --from-beginning --topic from
+bin/kafka-console-consumer.sh --zookeeper hadoop100:2181 --from-beginning --topic to
 
  */
 object KafkaStreaming{
@@ -52,18 +54,18 @@ object KafkaStreaming{
     //设置sparkconf
     val conf = new SparkConf().setMaster("local[4]").setAppName("NetworkWordCount")
     //新建了streamingContext
-    val ssc = new StreamingContext(conf, Seconds(1))
+    val ssc = new StreamingContext(conf, Seconds(5))
 
     //kafka的地址
-    val brobrokers = "192.168.228.130:9092,192.168.228.131:9092,192.168.228.130:9092"
+    val brobrokers = "hadoop100:9092,hadoop101:9092,hadoop102:9092"
     //kafka的队列名称
-    val sourcetopic="source"
+    val sourcetopic="from"
 
     //kafka的队列名称
-    val targettopic="target"
+    val targettopic="to"
 
     //创建消费者组名
-    var group="con-consumer-group"
+    var group="lebintestkafka"
 
     //kafka消费者配置
     val kafkaParam = Map(
@@ -81,20 +83,55 @@ object KafkaStreaming{
     )
 
     //创建DStream，返回接收到的输入数据
-    var stream=KafkaUtils.
-        createDirectStream[String,String](ssc, LocationStrategies.PreferConsistent,ConsumerStrategies.Subscribe[String,String](Array(sourcetopic),kafkaParam))
+    var stream = KafkaUtils.createDirectStream[String,String](
+      ssc, //
+      LocationStrategies.PreferConsistent,//
+      ConsumerStrategies.Subscribe[String,String](Array(sourcetopic),kafkaParam)
+    )
+
+    /**
+      * 对topic中的数据进行实时的处理
+      */
+//    val events = stream.flatMap(line => {
+//      println(s"Line ${line.value()}.")
+//      //      val data = JSON.parseObject(line.value())
+//
+//      val data = line.value()
+//
+//      Some(data)
+//    })
+//    events.print(10)
+
+//    /**
+//      * 偏移量管理
+//      */
+//    var offsetRanges = Array[OffsetRange]()
+//    val abc = stream.transform{ rdd =>
+//      offsetRanges = rdd.asInstanceOf[HasOffsetRanges].offsetRanges
+//      rdd
+//    }
+//    abc.foreachRDD{ rdd =>
+//      for(offset <- offsetRanges)
+//        println(offset)
+//      rdd.foreachPartition{ items =>
+//        //处理了业务
+//        for(item <- items){
+//          println(item.value())
+//        }
+//      }
+//    }
 
 
     //每一个stream都是一个ConsumerRecord
-    stream.map(s =>("id:" + s.key(),">>>>:"+s.value())).foreachRDD(rdd => {
+    stream.map( s =>("id:" + s.key(),">>>>:"+s.value()) ).foreachRDD( rdd => {
       //对于RDD的每一个分区执行一个操作
-      rdd.foreachPartition(partitionOfRecords => {
+      rdd.foreachPartition( partitionOfRecords => {
         // kafka连接池。
         val pool = createKafkaProducerPool(brobrokers, targettopic)
         //从连接池里面取出了一个Kafka的连接
         val p = pool.borrowObject()
         //发送当前分区里面每一个数据到target topic
-        partitionOfRecords.foreach {message => System.out.println(message._2);
+        partitionOfRecords.foreach { message => System.out.println(message._2);
           p.send(message._2,Option(targettopic))}
 
         // 使用完了需要将kafka还回去
@@ -103,9 +140,7 @@ object KafkaStreaming{
       })
 
       //更新offset信息
-      val offsetRanges = rdd.asInstanceOf[HasOffsetRanges].offsetRanges
-
-
+//      val offsetRanges = rdd.asInstanceOf[HasOffsetRanges].offsetRanges
     })
 
     ssc.start()

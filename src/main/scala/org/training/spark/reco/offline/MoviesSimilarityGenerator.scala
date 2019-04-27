@@ -1,4 +1,4 @@
-package org.training.spark.reco.offline
+package org.training.spark.RecommomdSystem
 
 import org.apache.spark.{SparkConf, SparkContext}
 import org.apache.spark.mllib.linalg.Vectors
@@ -24,17 +24,36 @@ object MoviesSimilarityGenerator {
     val threshold = 0.1
 
     // Load and parse the data file.
+    /*
+1::1193::5::978300760
+1::661::3::978302109
+1::914::3::978301968
+1::3408::4::978300275
+1::2355::5::978824291
+     */
+    // rating: RDD[Array(userID, movieID, ratings, timestamp)]
     val rows = sc.textFile(inputFile).map(_.split("::")).map { p =>
       (p(0).toLong, p(1).toInt, p(2).toDouble)
     }
 
-    val maxMovieId = rows.map(_._2).max() + 1
+    println("############################################")
+    rows.take(100).foreach(println(_))
 
+    val maxMovieId = rows.map(_._2).max() + 1//取出movieid的最大值
+
+
+    //
     val rowRdd = rows.map { p =>
-      (p._1, (p._2, p._3))
+      (p._1, (p._2, p._3)) //(userID,(movieID,ratings))
     }.groupByKey().map { kv =>
+        println("maxMovieId:  "+maxMovieId)
+      println("kv._2.toSeq:  "+kv._2.toSeq)
       Vectors.sparse(maxMovieId, kv._2.toSeq)
     }.cache()
+
+    println("############################################")
+    rowRdd.take(10).foreach(println(_))
+
 
     val mat = new RowMatrix(rowRdd)
 

@@ -106,6 +106,7 @@ object FantasyBasketball {
           .saveAsTextFile(s"${TMP_PATH}/BasketballStatsWithYear/$i/")
     }
 
+      println("程序开始")
 
     //********************
     //CODE
@@ -131,6 +132,7 @@ object FantasyBasketball {
     }
 
     //Holds initial bball stats + weighted stats + normalized stats
+      //BasketballData => BballData
     case class BballData(val year: Int, name: String, position: String, age: Int,
                          team: String, gp: Int, gs: Int, mp: Double, stats: Array[Double],
                          statsZ: Array[Double] = Array[Double](), valueZ: Double = 0,
@@ -138,6 +140,7 @@ object FantasyBasketball {
                          experience: Double = 0)
 
     //parse a stat line into a BBallDataZ object
+      //basketballparse
     def bbParse(input: String,
                 bStats: scala.collection.Map[String, Double] =Map.empty,
                 zStats: scala.collection.Map[String, Double] = Map.empty) = {
