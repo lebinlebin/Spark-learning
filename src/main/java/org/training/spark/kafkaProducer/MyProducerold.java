@@ -1,4 +1,4 @@
-package org.training.spark.kafka;
+package org.training.spark.kafkaProducer;
 
 import java.util.Properties;
 import kafka.javaapi.producer.Producer;

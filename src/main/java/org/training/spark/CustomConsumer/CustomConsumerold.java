@@ -1,4 +1,4 @@
-package org.training.spark.kafka;
+package org.training.spark.CustomConsumer;
 import java.util.HashMap;
 import java.util.List;
 import java.util.Map;

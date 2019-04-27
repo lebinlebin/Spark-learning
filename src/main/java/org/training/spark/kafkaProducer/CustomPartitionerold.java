@@ -1,6 +1,5 @@
-package org.training.spark.kafka;
+package org.training.spark.kafkaProducer;
 
-import java.util.Map;
 import kafka.producer.Partitioner;
 
 /**

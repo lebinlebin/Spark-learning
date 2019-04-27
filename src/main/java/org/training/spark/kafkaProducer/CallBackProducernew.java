@@ -1,4 +1,4 @@
-package org.training.spark.kafka;
+package org.training.spark.kafkaProducer;
 
 import java.util.Properties;
 import org.apache.kafka.clients.producer.Callback;
@@ -15,7 +15,7 @@ public class CallBackProducernew {
 
         Properties props = new Properties();
         // Kafka服务端的主机名和端口号
-        props.put("bootstrap.servers", "hadoop103:9092");
+        props.put("bootstrap.servers", "hadoop100:9092");
         // 等待所有副本节点的应答
         props.put("acks", "all");
         // 消息发送最大尝试次数
@@ -30,6 +30,9 @@ public class CallBackProducernew {
         props.put("key.serializer", "org.apache.kafka.common.serialization.StringSerializer");
         // value序列化
         props.put("value.serializer", "org.apache.kafka.common.serialization.StringSerializer");
+
+        // 自定义分区
+//        props.put("partitioner.class", "org.training.spark.kafkaProducer.CustomPartitionerold");
 
         KafkaProducer<String, String> kafkaProducer = new KafkaProducer<>(props);
 

@@ -1,11 +1,13 @@
-package org.training.spark.kafka;
+package org.training.spark.kafkaProducer;
 
-import java.util.Map;
 import org.apache.kafka.clients.producer.Partitioner;
 import org.apache.kafka.common.Cluster;
 
+import java.util.Map;
+
 /**
  * 自定义分区（新API）
+ * 需求：将所有数据存储到topic的第0号分区上
  */
 public class CustomPartitionernew implements Partitioner {
 

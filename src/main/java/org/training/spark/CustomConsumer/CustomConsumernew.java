@@ -1,4 +1,4 @@
-package org.training.spark.kafka;
+package org.training.spark.CustomConsumer;
 import java.util.Arrays;
 import java.util.Properties;
 import org.apache.kafka.clients.consumer.ConsumerRecord;
