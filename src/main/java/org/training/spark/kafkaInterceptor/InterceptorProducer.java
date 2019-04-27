@@ -13,7 +13,7 @@ public class InterceptorProducer {
     public static void main(String[] args) throws Exception {
         // 1 设置配置信息
         Properties props = new Properties();
-        props.put("bootstrap.servers", "hadoop102:9092");
+        props.put("bootstrap.servers", "hadoop100:9092");
         props.put("acks", "all");
         props.put("retries", 0);
         props.put("batch.size", 16384);
@@ -24,7 +24,8 @@ public class InterceptorProducer {
 
         // 2 构建拦截链
         List<String> interceptors = new ArrayList<>();
-        interceptors.add("com.atguigu.kafka.interceptor.TimeInterceptor"); 	interceptors.add("com.atguigu.kafka.interceptor.CounterInterceptor");
+        interceptors.add("org.training.spark.kafkaInterceptor.TimeInterceptor");
+        interceptors.add("org.training.spark.kafkaInterceptor.CounterInterceptor");
         props.put(ProducerConfig.INTERCEPTOR_CLASSES_CONFIG, interceptors);
 
         String topic = "first";

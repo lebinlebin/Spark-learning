@@ -52,9 +52,9 @@ public class SimpleExample {
         int partition = Integer.parseInt("0");
         // broker节点的ip
         List<String> seeds = new ArrayList<>();
-        seeds.add("192.168.9.102");
-        seeds.add("192.168.9.103");
-        seeds.add("192.168.9.104");
+        seeds.add("hadoop100");
+        seeds.add("hadoop101");
+        seeds.add("hadoop102");
         // 端口
         int port = Integer.parseInt("9092");
         try {
