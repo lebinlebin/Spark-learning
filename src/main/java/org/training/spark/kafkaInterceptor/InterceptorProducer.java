@@ -33,7 +33,6 @@ public class InterceptorProducer {
 
         // 3 发送消息
         for (int i = 0; i < 10; i++) {
-
             ProducerRecord<String, String> record = new ProducerRecord<>(topic, "message" + i);
             producer.send(record);
         }

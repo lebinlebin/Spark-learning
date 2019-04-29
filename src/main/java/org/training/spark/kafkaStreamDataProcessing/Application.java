@@ -18,7 +18,7 @@ public class Application {
         // 设置参数
         Properties settings = new Properties();
         settings.put(StreamsConfig.APPLICATION_ID_CONFIG, "logFilter");
-        settings.put(StreamsConfig.BOOTSTRAP_SERVERS_CONFIG, "hadoop102:9092");
+        settings.put(StreamsConfig.BOOTSTRAP_SERVERS_CONFIG, "hadoop100:9092");
 
         StreamsConfig config = new StreamsConfig(settings);
 

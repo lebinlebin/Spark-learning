@@ -1,4 +1,4 @@
-package org.training.spark.kafka;
+package org.training.spark.kafkaSimpleApi;
 
 import java.nio.ByteBuffer;
 import java.util.ArrayList;
@@ -6,18 +6,13 @@ import java.util.Collections;
 import java.util.HashMap;
 import java.util.List;
 import java.util.Map;
-
 import kafka.api.FetchRequest;
 import kafka.api.FetchRequestBuilder;
 import kafka.api.PartitionOffsetRequestInfo;
 import kafka.cluster.BrokerEndPoint;
 import kafka.common.ErrorMapping;
 import kafka.common.TopicAndPartition;
-import kafka.javaapi.FetchResponse;
-import kafka.javaapi.OffsetResponse;
-import kafka.javaapi.PartitionMetadata;
-import kafka.javaapi.TopicMetadata;
-import kafka.javaapi.TopicMetadataRequest;
+import kafka.javaapi.*;
 import kafka.javaapi.consumer.SimpleConsumer;
 import kafka.message.MessageAndOffset;
 
@@ -32,7 +27,7 @@ import kafka.message.MessageAndOffset;
  * 2）方法描述：
  * findLeader()	    客户端向种子节点发送主题元数据，将副本集加入备用节点
  * getLastOffset()	消费者客户端发送偏移量请求，获取分区最近的偏移量
- * run()	        消费者低级AP I拉取消息的主要方法
+ * run()	        消费者低级API拉取消息的主要方法
  * findNewLeader()	当分区的主副本节点发生故障，客户将要找出新的主副本
  */
 public class SimpleExample {
@@ -47,7 +42,7 @@ public class SimpleExample {
         // 最大读取消息数量
         long maxReads = Long.parseLong("3");
         // 要订阅的topic
-        String topic = "test1";
+        String topic = "second";
         // 要查找的分区
         int partition = Integer.parseInt("0");
         // broker节点的ip
@@ -57,6 +52,7 @@ public class SimpleExample {
         seeds.add("hadoop102");
         // 端口
         int port = Integer.parseInt("9092");
+
         try {
             example.run(maxReads, topic, partition, seeds, port);
         } catch (Exception e) {
@@ -188,6 +184,7 @@ public class SimpleExample {
                 consumer = new SimpleConsumer(seed, a_port, 100000, 64 * 1024, "leaderLookup");
                 List<String> topics = Collections.singletonList(a_topic);
                 TopicMetadataRequest req = new TopicMetadataRequest(topics);
+
                 kafka.javaapi.TopicMetadataResponse resp = consumer.send(req);
 
                 List<TopicMetadata> metaData = resp.topicsMetadata();
