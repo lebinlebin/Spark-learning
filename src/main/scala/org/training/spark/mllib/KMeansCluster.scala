@@ -15,10 +15,12 @@ object KMeansCluster extends App{
   val sc = new SparkContext(conf)
 
   //加载数据
-  val path = "data/kmeans_data.txt"
+  val path = "data/kmeans_data.txt"//hdfs 路径
   val data = sc.textFile(path)
   val parsedData = data.map(s => Vectors.dense(s.split(' ').map(_.toDouble))).cache()
 
+  println(">>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>")
+  parsedData.take(100).foreach(println(_))
   //通过KMeans将数据分成两个阵营
   val numClusters = 2
   val numIterations = 20
