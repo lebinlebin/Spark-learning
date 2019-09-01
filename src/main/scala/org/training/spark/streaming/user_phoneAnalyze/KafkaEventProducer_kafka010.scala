@@ -69,9 +69,6 @@ object KafkaEventProducer_kafka010 {
       // 创建Kafka消费者
       val kafkaProducer = createKafkaProducer(broker)
 
-
-
-
       while(true) {
         // prepare event data
         val event = new JSONObject()
@@ -84,9 +81,6 @@ object KafkaEventProducer_kafka010 {
         kafkaProducer.send(new ProducerRecord[String, String](topic, event.toString))
         println("Message sent: " + event)
         Thread.sleep(500)
-
-
-
-}
+    }
   }
 }

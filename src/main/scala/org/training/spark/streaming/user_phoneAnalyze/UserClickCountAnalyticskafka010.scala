@@ -1,10 +1,12 @@
 package org.training.spark.streaming.user_phoneAnalyze
 
 import com.alibaba.fastjson.JSON
+import org.apache.kafka.clients.consumer.ConsumerRecord
 import org.apache.spark.streaming.{Seconds, StreamingContext}
 import org.training.spark.util.{KafkaRedisProperties, RedisClient}
 import org.apache.kafka.common.serialization.StringDeserializer
 import org.apache.spark.SparkConf
+import org.apache.spark.streaming.dstream.InputDStream
 import org.apache.spark.streaming.kafka010._
 
 object UserClickCountAnalyticskafka010 {
@@ -76,7 +78,7 @@ object UserClickCountAnalyticskafka010 {
     // LocationStrategies.PreferConsistent：持续的在所有Executor之间分配分区
     // ConsumerStrategies：选择如何在Driver和Executor上创建和配置Kafka Consumer
     // ConsumerStrategies.Subscribe：订阅一系列主题
-    val kafkaStream = KafkaUtils.createDirectStream[String, String](
+    val kafkaStream:InputDStream[ConsumerRecord[String, String]] = KafkaUtils.createDirectStream[String, String](
       ssc,
       LocationStrategies.PreferConsistent,
       ConsumerStrategies.Subscribe[String, String](Array(topics), kafkaParam010)
@@ -87,11 +89,14 @@ object UserClickCountAnalyticskafka010 {
     /**
       * 对topic中的数据进行实时的处理
       */
-    val events = kafkaStream.flatMap(line => {
+      //flatMap  获取每一个ConsumerRecord[String, String] 对象
+    val events = kafkaStream.flatMap( line => {
       println(s"Line ${line.value()}.")
       val data = JSON.parseObject(line.value())
-      Some(data)
+//      Some(data)
+        Some(data)
     })
+
 
 /*
        key   value
