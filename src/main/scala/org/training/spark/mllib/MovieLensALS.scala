@@ -6,6 +6,9 @@ import org.apache.spark.{SparkConf, SparkContext}
 import org.apache.spark.mllib.recommendation.{ALS, MatrixFactorizationModel, Rating}
 import org.apache.spark.rdd._
 
+/**
+ *
+ */
 object MovieLensALS {
 
   def main(args: Array[String]) {
@@ -154,7 +157,7 @@ object MovieLensALS {
   def computeRmse(model: MatrixFactorizationModel, data: RDD[Rating], n: Long) = {
     val predictions: RDD[Rating] = model.predict(data.map(x => (x.user, x.product)))
     val predictionsAndRatings = predictions.map(x => ((x.user, x.product), x.rating))
-        .join(data.map(x => ((x.user, x.product), x.rating)))
+        .join(  data.map(x => ((x.user, x.product), x.rating))  )
         .values
     math.sqrt(predictionsAndRatings.map(x => (x._1 - x._2) * (x._1 - x._2)).reduce(_ + _) / n)
   }

@@ -1,11 +1,9 @@
 package org.training.spark.mllib
 
 import org.apache.log4j.{Level, Logger}
-import org.apache.spark.mllib.clustering.{KMeans, KMeansModel}
-import org.apache.spark.mllib.linalg.Vectors
 import org.apache.spark.{SparkConf, SparkContext}
 
-object KMeansCluster extends App{
+object KMeansCluster2 extends App{
   //屏蔽日志
   Logger.getLogger("org.apache.spark").setLevel(Level.ERROR)
   Logger.getLogger("org.eclipse.jetty.server").setLevel(Level.OFF)
@@ -19,10 +17,18 @@ object KMeansCluster extends App{
   val path = "data/testkmeans"//hdfs 路径
 
   val data = sc.textFile(path)
-//  val parsedData = data.map(s => Vectors.dense(s.split(' ').map(_.toDouble))).cache()
+  val parsedData = data.map{s =>
+    val head = s.split("\t")(0)
+    val featrues = s.split("\t")(1).split(",")(0)
+    val featrues1 = s.split("\t")(1).split(",")(1)
+
+    (head,featrues,featrues1)
+  }
+
+
 
   println(">>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>")
-  data.take(100).foreach(println(_))
+  parsedData.take(100).foreach(println(_))
   //通过KMeans将数据分成两个阵营
 //  val numClusters = 2
 //  val numIterations = 20
