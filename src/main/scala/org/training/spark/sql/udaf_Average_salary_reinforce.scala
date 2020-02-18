@@ -64,6 +64,7 @@ object MyAverage{
     val ds = spark.read.json("data/employees.json").as[Employee]
     ds.show()
 
+
     val averageSalary = new MyAverage().toColumn.name("average_salary")
 
     val result = ds.select(averageSalary)

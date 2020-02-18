@@ -88,7 +88,7 @@ object  Customer_Accumulator{
 
         rdd.foreach(hashAcc.add(_))
         hashAcc.value
-
+        println()
         for((k,v)<-hashAcc.value){
             println("["+k+":"+v+"]")
         }

@@ -573,6 +573,7 @@ object MovieLensClassify5 {
       lr.optimizer.setNumIterations(numIterations).setUpdater(updater).setRegParam(regParam).setStepSize(stepSize)
       lr.run(input)
     }
+    // 最后，我们定义第二个辅助函数并根据输入数据和分类模型，计算相关的AUC：
     // helper function to create AUC metric
     def createMetrics(label: String, data: RDD[LabeledPoint], model: ClassificationModel) = {
       val scoreAndLabels = data.map { point =>
@@ -582,8 +583,17 @@ object MovieLensClassify5 {
       (label, metrics.areaUnderROC)
     }
 
+    //为了加快多次模型训练的速度，可以缓存标准化的数据（包括类别信息）：
     // cache the data to increase speed of multiple runs agains the dataset
     scaledDataCats.cache
+
+    /**
+     * (1) 迭代
+     * 大多数机器学习的方法需要迭代训练，并且经过一定次数的迭代之后收敛到某个解（即最小
+     * 化损失函数时的最优权重向量）。 SGD收敛到合适的解需要迭代的次数相对较少，但是要进一步
+     * 提升性能则需要更多次迭代。为方便解释，这里设置不同的迭代次数numIterations，然后比
+     * 较AUC结果：
+     */
     // num iterations
     val iterResults = Seq(1, 5, 10, 50).map { param =>
       val model = trainWithParams(scaledDataCats, 0.0, param, new SimpleUpdater, 1.0)
@@ -595,8 +605,16 @@ object MovieLensClassify5 {
     5 iterations, AUC = 66.62%
     10 iterations, AUC = 66.55%
     50 iterations, AUC = 66.81%
+
+    于是我们发现一旦完成特定次数的迭代，再增大迭代次数对结果的影响较小。
     */
 
+    /**
+     * (2) 步长
+     * 在SGD中，在训练每个样本并更新模型的权重向量时，步长用来控制算法在最陡的梯度方向
+     * 上应该前进多远。较大的步长收敛较快，但是步长太大可能导致收敛到局部最优解。
+     * 下面计算不同步长的影响：
+     */
     // step size
     val stepResults = Seq(0.001, 0.01, 0.1, 1.0, 10.0).map { param =>
       val model = trainWithParams(scaledDataCats, 0.0, numIterations, new SimpleUpdater, param)
@@ -609,9 +627,35 @@ object MovieLensClassify5 {
     0.1 step size, AUC = 65.52%
     1.0 step size, AUC = 66.55%
     10.0 step size, AUC = 61.92%
+    得到的结果如下，可以看出步长增长过大对性能有负面影响：
     */
 
-    // regularization
+    /**
+     * (3) 正则化
+     * 前面逻辑回归的代码中简单提及了Updater类，该类在MLlib中实现了正则化。正则化通过
+     * 限制模型的复杂度避免模型在训练数据中过拟合。
+     * 正则化的具体做法是在损失函数中添加一项关于模型权重向量的函数，从而会使损失增加。
+     * 正则化在现实中几乎是必须的，当特征维度高于训练样本时（此时变量相关需要学习的权重数量
+     * 也非常大）尤其重要。
+     * 当正则化不存在或者非常低时，模型容易过拟合。而且大多数模型在没有正则化的情况会在
+     * 训练数据上过拟合。过拟合也是交叉验证技术使用的关键原因，交叉验证会在后面详细介绍。
+     * 相反，虽然正则化可以得到一个简单模型，但正则化太高可能导致模型欠拟合，从而使模型
+     * 性能变得很糟糕。
+     * MLlib中可用的正则化形式有如下几个。
+     * 1. SimpleUpdater：相当于没有正则化，是逻辑回归的默认配置。
+     * 2. SquaredL2Updater：这个正则项基于权重向量的L2正则化，是SVM模型的默认值。
+     * 3. L1Updater：这个正则项基于权重向量的L1正则化，会导致得到一个稀疏的权重向量（不
+     * 重要的权重的值接近0）。
+     *
+     *
+     * 正则化及其优化是一个广泛和重要的研究领域，下面给出一些相关的资料。
+     *1. 通 用 的 正 则 化 综 述 ： http://en.wikipedia.org/wiki/Regularization_(mathematics)。
+     *2. L2正则化： http://en.wikipedia.org/wiki/Tikhonov_regularization。
+     *3. 过拟合和欠拟合： http://en.wikipedia.org/wiki/Overfitting。
+     *4. 关于 过 拟合 以及 L1 和 L2正则 化 比较 的详 细 介绍 ： http://citeseerx.ist.
+     * psu.edu/viewdoc/download?doi=10.1.1.92.9860&rep=rep1&type=pdf。
+     */
+    // regularization  下面使用SquaredL2Updater研究正则化参数的影响：
     val regResults = Seq(0.001, 0.01, 0.1, 1.0, 10.0).map { param =>
       val model = trainWithParams(scaledDataCats, param, numIterations, new SquaredL2Updater, 1.0)
       createMetrics(s"$param L2 regularization parameter", scaledDataCats, model)
@@ -623,8 +667,27 @@ object MovieLensClassify5 {
     0.1 L2 regularization parameter, AUC = 66.63%
     1.0 L2 regularization parameter, AUC = 66.04%
     10.0 L2 regularization parameter, AUC = 35.33%
+
+    可以看出，低等级的正则化对模型的性能影响不大。然而，增大正则化可以看到欠拟合会导致较低模型性能。
+    你会发现使用L1正则项也会得到类似的结果。可以试试使用上述相同的评估方式，计算不同L1正则化参数下AUC的性能。
     */
 
+
+    /**
+     * 2. 决策树
+     * 决策树模型在一开始使用原始数据做训练时获得了最好的性能。当时设置了参数maxDepth
+     * 用来控制决策树的最大深度，进而控制模型的复杂度。而树的深度越大，得到的模型越复杂，但
+     * 有能力更好地拟合数据。
+     * 对于分类问题，我们需要为决策树模型选择以下两种不纯度度量方式： Gini或者Entropy。
+     *
+     * 树的深度和不纯度调优
+     * 下面我们来说明树的深度对模型性能的影响，其中使用与评估逻辑回归模型类似的评估方法（ AUC）。
+     * 首先在Spark shell中创建一个辅助函数：
+     * 接着，准备计算不同树深度配置下的AUC。因为不需要对数据进行标准化，所以我们将使用
+     * 样例中原始的数据。
+     *
+     * 注意决策树通常不需要特征的标准化和归一化，也不要求将类型特征进行二元编码。
+     */
     // investigate decision tree
     import org.apache.spark.mllib.tree.impurity.Impurity
     import org.apache.spark.mllib.tree.impurity.Entropy
@@ -654,6 +717,8 @@ object MovieLensClassify5 {
     20 tree depth, AUC = 98.45%
     */
 
+
+    //接下来，我们采用Gini不纯度进行类似的计算（代码比较类似，所以这里不给出具体代码实现，但可以在代码库中找到）。计算结果应该和下面类似：
     // investigate tree depth impact for Gini impurity
     val dtResultsGini = Seq(1, 2, 3, 4, 5, 10, 20).map { param =>
       val model = trainDTWithParams(data, param, Gini)
@@ -673,9 +738,21 @@ object MovieLensClassify5 {
     5 tree depth, AUC = 64.89%
     10 tree depth, AUC = 78.37%
     20 tree depth, AUC = 98.87%
+
+    从结果中可以看出，提高树的深度可以得到更精确的模型（这和预期一致，因为模型在更大
+    的树深度下会变得更加复杂）。然而树的深度越大，模型对训练数据过拟合程度越严重。
+    另外，两种不纯度方法对性能的影响差异较小。
     */
 
+
+    /**
+     * 3. 朴素贝叶斯
+     * 最后， 让我们看看lamda参数对朴素贝叶斯模型的影响。该参数可以控制相加式平滑（ additive smoothing），
+     * 解决数据中某个类别和某个特征值的组合没有同时出现的问题。
+     * 更多关于相加式平滑的内容请见： http://en.wikipedia.org/wiki/Additive_smoothing。
+     */
     // investigate Naive Bayes parameters
+    //和之前的做法一样，首先需要创建一个方便调用的辅助函数，用来训练不同lamba级别下的模型：
     def trainNBWithParams(input: RDD[LabeledPoint], lambda: Double) = {
       val nb = new NaiveBayes
       nb.setLambda(lambda)
@@ -696,13 +773,49 @@ object MovieLensClassify5 {
     0.1 lambda, AUC = 60.51%
     1.0 lambda, AUC = 60.51%
     10.0 lambda, AUC = 60.51%
+    从结果中可以看出lambda的值对性能没有影响，由此可见数据中某个特征和某个类别的组合不存在时不是问题
     */
 
+
+    /**
+     * 4. 交叉验证
+     * 到目前为止，本书只是简单提到交叉验证和训练样本外的预测。而交叉验证是实际机器学习
+     * 中的关键部分，同时在多模型选择和参数调优中占有中心地位。
+     * 交叉验证的目的是测试模型在未知数据上的性能。不知道训练的模型在预测新数据时的性
+     * 能，而直接放在实际数据（比如运行的系统）中进行评估是很危险的做法。正如前面提到的正则
+     * 化实验中，我们的模型可能在训练数据中已经过拟合了，于是在未被训练的新数据中预测性能会
+     * 很差。
+     * 交叉验证让我们使用一部分数据训练模型，将另外一部分用来评估模型性能。如果模型在训
+     * 练以外的新数据中进行了测试，我们便可以由此估计模型对新数据的泛化能力。
+     * 我们把数据划分为训练和测试数据，实现一个简单的交叉验证过程。我们将数据分为两个不
+     * 重叠的数据集。第一个数据集用来训练，称为训练集。第二个数据集称为测试集或者保留集，用
+     * 来评估模型在给定评测方法下的性能。实际中常用的划分方法包括： 50/50、 60/40、 80/20等，只
+     * 要训练模型的数据量不太小就行（通常，实际使用至少50%的数据用于训练）。
+     * 在很多例子中，会创建三个数据集：训练集、评估集（类似上述测试集用于模型参数的调
+     * 优，比如lambda和步长）和测试集（不用于模型的训练和参数调优，只用于估计模型在新数据
+     * 中性能）。
+     *
+     *
+     * 本书只简单地将数据分为训练集和测试集，但实际中存在很多更加复杂的交
+     * 叉验证技术。
+     * 一个流行的方法是K-折叠交叉验证，其中数据集被分成K个不重叠的部分。
+     * 用数据中的K-1份训练模型，剩下一部分测试模型。而只分训练集和测试集可以
+     * 看做是2-折叠交叉验证。
+     * 其他方法包括“留一交叉验证”和“随机采样”。更多资料详见http://en.
+     * wikipedia.org/wiki/Cross-validation_(statistics)。
+     */
     // illustrate cross-validation
     // create a 60% / 40% train/test data split
+    //首先，我们将数据集分成60%的训练集和40%的测试集（为了方便解释，我们在代码中使用
+    //一个固定的随机种子123来保证每次实验能得到相同的结果）：
     val trainTestSplit = scaledDataCats.randomSplit(Array(0.6, 0.4), 123)
     val train = trainTestSplit(0)
     val test = trainTestSplit(1)
+    /*
+    接下来在不同的正则化参数下评估模型的性能（这里依然使用AUC）。注意我们在正则化参
+    数之间设置了很小的步长，为的是更好解释AUC在各个正则化参数下的变化，同时这个例子的
+    AUC的变化也很小：
+    */
     // now we train our model using the 'train' dataset, and compute predictions on unseen 'test' data
     // in addition, we will evaluate the differing performance of regularization on training and test datasets
     val regResultsTest = Seq(0.0, 0.001, 0.0025, 0.005, 0.01).map { param =>
@@ -710,7 +823,10 @@ object MovieLensClassify5 {
       createMetrics(s"$param L2 regularization parameter", test, model)
     }
     regResultsTest.foreach { case (param, auc) => println(f"$param, AUC = ${auc * 100}%2.6f%%") }
+
+
     /*
+    代码计算了测试集的模型性能，具体结果如下：
     0.0 L2 regularization parameter, AUC = 66.480874%
     0.001 L2 regularization parameter, AUC = 66.480874%
     0.0025 L2 regularization parameter, AUC = 66.515027%
@@ -724,13 +840,24 @@ object MovieLensClassify5 {
       createMetrics(s"$param L2 regularization parameter", train, model)
     }
     regResultsTrain.foreach { case (param, auc) => println(f"$param, AUC = ${auc * 100}%2.6f%%") }
-/*
-0.0 L2 regularization parameter, AUC = 66.260311%
-0.001 L2 regularization parameter, AUC = 66.260311%
-0.0025 L2 regularization parameter, AUC = 66.260311%
-0.005 L2 regularization parameter, AUC = 66.238294%
-0.01 L2 regularization parameter, AUC = 66.238294%
-*/
+    /*
+    0.0 L2 regularization parameter, AUC = 66.260311%
+    0.001 L2 regularization parameter, AUC = 66.260311%
+    0.0025 L2 regularization parameter, AUC = 66.260311%
+    0.005 L2 regularization parameter, AUC = 66.238294%
+    0.01 L2 regularization parameter, AUC = 66.238294%
+
+    从上面的结果可以看出，当我们的训练集和测试集相同时，通常在正则化参数比较小的情况
+    下可以得到最高的性能。这是因为我们的模型在较低的正则化下学习了所有的数据，即过拟合的
+    情况下达到更高的性能。
+    相反，当训练集和测试集不同时，通常较高正则化可以得到较高的测试性能。
+    在交叉验证中，我们一般选择测试集中性能表现最好的参数设置（包括正则化以及步长等各
+    种各样的参数）。然后用这些参数在所有的数据集上重新训练，最后用于新数据集的预测。
+
+    第4章使用Spark构建推荐系统时并没有讨论交叉验证。但是你也可以用本章
+   介绍的方法将ratings数据集划分成训练集和测试集。然后在训练集中测试不同
+   的参数设置，同时在测试集上评估MSE和MAP的性能。建议尝试一下！
+    */
 
     sc.stop()
   }

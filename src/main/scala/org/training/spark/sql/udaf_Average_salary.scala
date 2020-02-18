@@ -21,7 +21,7 @@ import org.apache.spark.sql.SparkSession
 class udaf_Average_salary extends UserDefinedAggregateFunction{
 
   // 输入数据
-  override def inputSchema: StructType = StructType( StructField("salary",LongType) :: Nil )
+  override def inputSchema: StructType = StructType(StructField("salary",LongType) :: Nil )
 
   // 每一个分区中的 共享变量
   override def bufferSchema: StructType = StructType( StructField("sum",LongType) :: StructField("count",IntegerType) :: Nil )
