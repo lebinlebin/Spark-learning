@@ -200,8 +200,9 @@ public class SimpleExample {
             } catch (Exception e) {
                 System.out.println("Error communicating with Broker [" + seed + "] to find Leader for [" + a_topic + ", " + a_partition + "] Reason: " + e);
             } finally {
-                if (consumer != null)
+                if (consumer != null) {
                     consumer.close();
+                }
             }
         }
         if (returnMetaData != null) {

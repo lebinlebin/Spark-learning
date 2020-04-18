@@ -14,7 +14,7 @@ import org.apache.zookeeper.ZooDefs.Ids;
  */
 public class DistributeServer {
 
-    private static String connectString = "hadoop102:2181,hadoop103:2181,hadoop104:2181";
+    private static String connectString = "hadoop100:2181,hadoop102:2181,hadoop103:2181";
     private static int sessionTimeout = 2000;
     private ZooKeeper zk = null;
     private String parentNode = "/servers";

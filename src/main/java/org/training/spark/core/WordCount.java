@@ -56,6 +56,7 @@ public class WordCount {
         }
     ).reduceByKey(
         new Function2<Integer, Integer, Integer>(){
+          @Override
           public Integer call(Integer x, Integer y){
             return x + y;
           }
