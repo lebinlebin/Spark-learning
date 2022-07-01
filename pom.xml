@@ -157,7 +157,7 @@
     <dependency>
       <groupId>org.apache.kafka</groupId>
       <artifactId>kafka-clients</artifactId>
-      <version>0.11.0.0</version>
+      <version>0.11.0.2</version>
     </dependency>
     <!--//如果只想用高级api要上边的就够了-->
     <!-- https://mvnrepository.com/artifact/org.apache.kafka/kafka -->
